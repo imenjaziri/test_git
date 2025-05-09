@@ -1,0 +1,16 @@
+/*
+ * ihm.c
+ *
+ *  Created on: May 5, 2025
+ *      Author: ThinkPad
+ */
+
+#include "ihm.h"
+
+
+
+void IHM_Init(void)
+{
+    uint8_t rxBuffer[10];
+    HAL_UART_Transmit(&huart2, rxBuffer, 10, 100);
+}

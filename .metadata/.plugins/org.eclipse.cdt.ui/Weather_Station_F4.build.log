@@ -1,0 +1,10 @@
+15:41:20 **** Incremental Build of configuration Debug for project Weather_Station_F4 ****
+make -j8 all 
+arm-none-eabi-size  Weather_Station_F4.elf 
+   text	   data	    bss	    dec	    hex	filename
+  22316	     96	  18624	  41036	   a04c	Weather_Station_F4.elf
+Finished building: default.size.stdout
+ 
+
+15:41:20 Build Finished. 0 errors, 0 warnings. (took 300ms)
+

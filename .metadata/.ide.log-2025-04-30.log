@@ -1,0 +1,39 @@
+2025-05-01 20:22:03,904 [INFO] WebApp:191 - Connection restablished
+2025-05-01 20:22:07,090 [INFO] WebApp:194 - Connection lost
+2025-05-01 20:22:07,683 [INFO] WebApp:191 - Connection restablished
+2025-05-01 20:22:09,965 [INFO] WebApp:194 - Connection lost
+2025-05-01 20:22:10,234 [INFO] WebApp:191 - Connection restablished
+2025-05-01 20:23:36,385 [INFO] UtilMem:75 - End SaveConfig() Used Memory: 782359376 Bytes (1000341504)
+2025-05-01 20:23:38,316 [INFO] UtilMem:75 - End SaveConfig() Used Memory: 802808656 Bytes (1000341504)
+2025-05-01 20:23:40,185 [INFO] UtilMem:75 - End SaveConfig() Used Memory: 843178832 Bytes (1000341504)
+2025-05-01 20:23:40,989 [INFO] BlockDiagram:2775 - set Specific Code input for plugin: SYS
+2025-05-01 20:23:40,990 [INFO] BlockDiagram:2775 - set Specific Code input for plugin: RCC
+2025-05-01 20:23:40,990 [INFO] BlockDiagram:2775 - set Specific Code input for plugin: NVIC
+2025-05-01 20:23:40,992 [INFO] BlockDiagram:2775 - set Specific Code input for plugin: GPIO
+2025-05-01 20:23:40,996 [INFO] CodeGenerator:882 - code generatio: config db path: C:\ST\STM32CubeIDE_1.18.0\STM32CubeIDE\plugins\com.st.stm32cube.common.mx_6.14.1.202504091515\\db\
+2025-05-01 20:23:41,121 [INFO] CodeEngine:263 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\MXTmpFiles\license.tmp_save
+2025-05-01 20:23:41,265 [INFO] CodeEngine:287 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\MXTmpFiles\license.tmp
+2025-05-01 20:23:41,335 [INFO] CodeEngine:263 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\MXTmpFiles\gpio.tmp_save
+2025-05-01 20:23:41,455 [INFO] CodeEngine:287 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\MXTmpFiles\gpio.tmp
+2025-05-01 20:23:42,103 [INFO] CodeEngine:263 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Src\stm32f4xx_it.c_save
+2025-05-01 20:23:42,347 [INFO] CodeEngine:287 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Src\stm32f4xx_it.c
+2025-05-01 20:23:42,353 [INFO] CodeEngine:263 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Inc\stm32f4xx_it.h_save
+2025-05-01 20:23:42,459 [INFO] CodeEngine:287 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Inc\stm32f4xx_it.h
+2025-05-01 20:23:42,472 [INFO] CodeEngine:263 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Src\stm32f4xx_hal_msp.c_save
+2025-05-01 20:23:42,567 [INFO] CodeEngine:287 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Src\stm32f4xx_hal_msp.c
+2025-05-01 20:23:42,572 [INFO] CodeEngine:263 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\MXTmpFiles\system.tmp_save
+2025-05-01 20:23:42,624 [INFO] CodeEngine:287 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\MXTmpFiles\system.tmp
+2025-05-01 20:23:42,628 [INFO] CodeEngine:263 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Src\stm32f4xx_hal_timebase_tim.c_save
+2025-05-01 20:23:42,693 [INFO] CodeEngine:287 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Src\stm32f4xx_hal_timebase_tim.c
+2025-05-01 20:23:42,704 [INFO] CodeEngine:319 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Inc\stm32f4xx_hal_conf.h_save
+2025-05-01 20:23:42,773 [INFO] CodeEngine:343 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Inc\stm32f4xx_hal_conf.h
+2025-05-01 20:23:42,810 [INFO] CodeEngine:263 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Inc\main.h_save
+2025-05-01 20:23:42,902 [INFO] CodeEngine:287 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Inc\main.h
+2025-05-01 20:23:42,909 [INFO] CodeEngine:263 - oldGeneratedFile, C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Src\main.c_save
+2025-05-01 20:23:43,005 [INFO] CodeEngine:287 - Generated code: C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\freeRTOS_project\Core\Src\main.c
+2025-05-01 20:23:43,447 [INFO] ProjectBuilder:3324 - Time for Copy HAL[1] : 233mS.
+2025-05-01 20:23:43,452 [INFO] ProjectBuilder:4912 - Project Generator version: 4.6.0.1-B1
+2025-05-01 20:23:43,549 [INFO] ConfigFileManager:1590 - The Die is : DIE413
+2025-05-01 20:23:44,366 [INFO] ProjectBuilder:5191 - Time for Generating toolchain IDE Files: 914mS.
+2025-05-01 20:23:44,367 [INFO] ProjectBuilder:3181 - Time for Copy CMSIS : 1mS.
+2025-05-01 20:23:44,370 [INFO] ProjectBuilder:3181 - Time for Copy CMSIS : 0mS.

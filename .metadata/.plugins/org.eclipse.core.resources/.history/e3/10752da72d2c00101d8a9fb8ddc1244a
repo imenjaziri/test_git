@@ -1,0 +1,22 @@
+/*
+ * Ihm.c
+ *
+ *  Created on: May 8, 2025
+ *      Author: ThinkPad
+ */
+
+#include "main.h"
+#include "usart.h"
+uint8_t RxChar=0;
+
+void StartIhmTask(void const * argument)
+{
+	/* USER CODE BEGIN StartIhmTask */
+	/* Infinite loop */
+	HAL_UART_Receive_IT(&huart2, &RxChar,1);
+	for(;;)
+	{
+		osDelay(1);
+	}
+	/* USER CODE END StartIhmTask */
+}

@@ -1,0 +1,17 @@
+/*
+ * ihm.c
+ *
+ *  Created on: May 5, 2025
+ *      Author: ThinkPad
+ */
+
+#include "ihm.h"
+#define RX_BUFFER_SIZE 64
+void IHM_Init(void)
+{
+    uint8_t rxBuffer[RX_BUFFER_SIZE];
+    if (HAL_UART_Receive_IT(&huart2, rxBuffer, sizeof(rxBuffer)-1) != HAL_OK)
+    {
+        Error_Handler();
+    }
+};
