@@ -22,9 +22,9 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ihm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -127,7 +127,6 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-    HAL_UART_Receive_IT(&huart2, &rxByte, 1);
 
   for(;;)
   {
@@ -146,16 +145,7 @@ void StartDefaultTask(void const * argument)
 __weak void Start_IHM_Task(void const * argument)
 {
   /* USER CODE BEGIN Start_IHM_Task */
-	char *msg = "IHM Task Running\r\n";
-	    HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 1000);
-	    AfficherMenuPrincipal();
-	    if (rx_flag==1)
-	    {
-	    	processMessage(rxBuffer);
-	    }
-	    else {
-	    	HAL_UART_Transmit(&huart2, (uint8_t*)"ERROR\r\n", 9, 100);
-	    }
+
   /* Infinite loop */
   for(;;)
   {

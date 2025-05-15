@@ -1,1 +1,2 @@
-../Core/Src/Ihm.c:12:6:StartIhmTask	1
+../Core/Src/Ihm.c:22:6:StartIhmTask	1
+../Core/Src/Ihm.c:35:6:AfficherMenuPrincipal	1

@@ -14,15 +14,15 @@
 #include "main.h"
 #include "usart.h"
 #include "stm32l4xx_hal_uart.h"
+#include "FreeRTOS.h"
+#include "message_buffer.h"
+#include "cmsis_os.h"
 extern uint8_t currentStep;
-extern char txBuffer[128];
+extern uint8_t txBuffer[128];
 extern uint8_t rx_flag;
 extern uint8_t rxBuffer[64];
 extern uint8_t rxByte;
-void IHM_Init(void);
-void Menu_function(void);
 void AfficherMenuPrincipal(void);
-void EnvoyerEtapeMenu(void) ;
 void processMessage(uint8_t *rxBuffer);
 
 
