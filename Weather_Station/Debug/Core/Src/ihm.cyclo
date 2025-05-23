@@ -1,4 +1,7 @@
-../Core/Src/ihm.c:18:6:Start_IHM_Task	2
-../Core/Src/ihm.c:43:6:AfficherMenuPrincipal	1
-../Core/Src/ihm.c:60:6:HAL_UART_RxCpltCallback	7
-../Core/Src/ihm.c:97:6:processMessage	3
+../Core/Src/ihm.c:23:6:Start_IHM_Task	2
+../Core/Src/ihm.c:49:6:AfficherMenuPrincipal	1
+../Core/Src/ihm.c:76:6:HAL_UART_RxCpltCallback	9
+../Core/Src/ihm.c:128:6:tokenization	3
+../Core/Src/ihm.c:162:6:SetSF_f	6
+../Core/Src/ihm.c:184:6:GetSF_f	1
+../Core/Src/ihm.c:192:6:ParseCommand	4

@@ -1,4 +1,4 @@
-10:50:09 **** Incremental Build of configuration Debug for project Weather_Station ****
+10:55:22 **** Incremental Build of configuration Debug for project Weather_Station ****
 make -j8 all 
 arm-none-eabi-gcc "../Core/Src/ihm.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L476xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I"C:/Users/ThinkPad/Desktop/FreeRTOS/freeRTOS_workspace/Weather_Station/Middlewares" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/ihm.d" -MT"Core/Src/ihm.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/ihm.o"
 arm-none-eabi-gcc -o "Weather_Station.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\Weather_Station\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Weather_Station.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
@@ -7,57 +7,15 @@ Finished building target: Weather_Station.elf
 arm-none-eabi-size  Weather_Station.elf 
 arm-none-eabi-objdump -h -S Weather_Station.elf  > "Weather_Station.list"
    text	   data	    bss	    dec	    hex	filename
-  30268	     96	  23472	  53836	   d24c	Weather_Station.elf
+  34596	    144	  23560	  58300	   e3bc	Weather_Station.elf
 Finished building: default.size.stdout
  
 Finished building: Weather_Station.list
  
-10:50:21 **** Incremental Build of configuration Debug for project Weather_Station ****
+10:55:25 **** Incremental Build of configuration Debug for project Weather_Station ****
 make -j8 all 
 arm-none-eabi-size  Weather_Station.elf 
    text	   data	    bss	    dec	    hex	filename
-  30268	     96	  23472	  53836	   d24c	Weather_Station.elf
+  34596	    144	  23560	  58300	   e3bc	Weather_Station.elf
 Finished building: default.size.stdout
- 
-10:51:15 **** Incremental Build of configuration Debug for project Weather_Station ****
-make -j8 all 
-arm-none-eabi-gcc "../Core/Src/ihm.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L476xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I"C:/Users/ThinkPad/Desktop/FreeRTOS/freeRTOS_workspace/Weather_Station/Middlewares" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/ihm.d" -MT"Core/Src/ihm.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/ihm.o"
-arm-none-eabi-gcc -o "Weather_Station.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\Weather_Station\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Weather_Station.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: Weather_Station.elf
- 
-arm-none-eabi-size  Weather_Station.elf 
-arm-none-eabi-objdump -h -S Weather_Station.elf  > "Weather_Station.list"
-   text	   data	    bss	    dec	    hex	filename
-  30268	     96	  23472	  53836	   d24c	Weather_Station.elf
-Finished building: default.size.stdout
- 
-Finished building: Weather_Station.list
- 
-10:52:10 **** Incremental Build of configuration Debug for project Weather_Station ****
-make -j8 all 
-arm-none-eabi-gcc "../Core/Src/ihm.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L476xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I"C:/Users/ThinkPad/Desktop/FreeRTOS/freeRTOS_workspace/Weather_Station/Middlewares" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/ihm.d" -MT"Core/Src/ihm.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/ihm.o"
-arm-none-eabi-gcc -o "Weather_Station.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\Weather_Station\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Weather_Station.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: Weather_Station.elf
- 
-arm-none-eabi-size  Weather_Station.elf 
-arm-none-eabi-objdump -h -S Weather_Station.elf  > "Weather_Station.list"
-   text	   data	    bss	    dec	    hex	filename
-  30268	     96	  23472	  53836	   d24c	Weather_Station.elf
-Finished building: default.size.stdout
- 
-Finished building: Weather_Station.list
- 
-11:05:58 **** Incremental Build of configuration Debug for project Weather_Station ****
-make -j8 all 
-arm-none-eabi-gcc "../Core/Src/ihm.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L476xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -I"C:/Users/ThinkPad/Desktop/FreeRTOS/freeRTOS_workspace/Weather_Station/Middlewares" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/ihm.d" -MT"Core/Src/ihm.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/ihm.o"
-arm-none-eabi-gcc -o "Weather_Station.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\ThinkPad\Desktop\FreeRTOS\freeRTOS_workspace\Weather_Station\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Weather_Station.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: Weather_Station.elf
- 
-arm-none-eabi-size  Weather_Station.elf 
-arm-none-eabi-objdump -h -S Weather_Station.elf  > "Weather_Station.list"
-   text	   data	    bss	    dec	    hex	filename
-  30268	     96	  23472	  53836	   d24c	Weather_Station.elf
-Finished building: default.size.stdout
- 
-Finished building: Weather_Station.list
  

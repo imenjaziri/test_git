@@ -14,12 +14,15 @@ MessageBufferHandle_t  MessageBufferHandle=NULL;
 const size_t xMessageBufferSizeBytes = 100;
 BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 uint8_t processing =0;
+volatile uint8_t retour=0;
+typedef void (*cmdHandler)(char *arg); // parameters: token[2], token[3] (TYPE OF VALUE+VAL), number of arguments (tokens)
+char *tokens[10];
+uint8_t SF_Value;
+uint8_t sf_buff[35];
 
 void Start_IHM_Task(void const * argument)
 {
 	/* USER CODE BEGIN Start_IHM_Task */
-	char *msg = "IHM Task Running\r\n";
-	HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), 1000);
 	AfficherMenuPrincipal();
 	MessageBufferHandle = xMessageBufferCreate(xMessageBufferSizeBytes);
 	if( MessageBufferHandle != NULL )
@@ -34,7 +37,10 @@ void Start_IHM_Task(void const * argument)
 	for(;;)
 	{
 		xMessageBufferReceive( MessageBufferHandle, received_data, sizeof(received_data), portMAX_DELAY);
-		processMessage(received_data);
+		memset(new_buff,0,sizeof(new_buff));
+		tokenization((char*)received_data);
+		ParseCommand();
+		memset(received_data,0,sizeof(received_data));
 		osDelay(1);
 	}
 	/* USER CODE END Start_IHM_Task */
@@ -48,16 +54,19 @@ void AfficherMenuPrincipal(void) {
 	sprintf((char*)txBuffer, "TO ACCESS SENSORS DATA WRITE : SENSORS \r\n");
 	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
 
+	sprintf((char*)txBuffer, "TO ACCESS SATELLITE PREDICTION MENU WRITE : SATELLITE\r\n");
+	HAL_UART_Transmit(&huart2,txBuffer, strlen((char*)txBuffer), 100);
+
 	sprintf((char*)txBuffer, "TO ACCESS GPS MENU WRITE : GPS\r\n");
 	HAL_UART_Transmit(&huart2,txBuffer, strlen((char*)txBuffer), 100);
 
-	sprintf((char*)txBuffer, "TO ACCESS LORA MENU, WRITE : LORA \r\n");
+	sprintf((char*)txBuffer, "TO ACCESS LORA MENU, WRITE : LORA\r\n");
 	HAL_UART_Transmit(&huart2,txBuffer, strlen((char*)txBuffer), 100);
 
-	sprintf((char*)txBuffer, "TO EXIT WRITE : EXIT\r\n");
+	sprintf((char*)txBuffer, "TO RESET TO THE PREVIOUS STATE WRITE : RESET\r\n");
 	HAL_UART_Transmit(&huart2,txBuffer, strlen((char*)txBuffer), 100);
 
-	sprintf((char*)txBuffer, "TO EXIT WRITE : EXIT\r\n");
+	sprintf((char*)txBuffer, "TO SAVE CHANGES WRITE : SAVE\r\n");
 	HAL_UART_Transmit(&huart2,txBuffer, strlen((char*)txBuffer), 100);
 
 	HAL_UART_Receive_IT(&huart2, &rxByte, 1);
@@ -70,80 +79,139 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	{   if (rxIndex!=0)
 	{
 		processing=1;
-		memcpy(new_buff,rxBuffer,rxIndex);
 		rxBuffer[rxIndex] = '\0';
+		memcpy(new_buff,rxBuffer,rxIndex);
 		xBytesSent=xMessageBufferSendFromISR(MessageBufferHandle,new_buff,strlen((char*)new_buff),&xHigherPriorityTaskWoken);
 		//The number of bytes actually written to the message buffer.  If the
 		// * message buffer didn't have enough free space for the message to be stored
 		// * then 0 is returned, otherwise xDataLengthBytes is returned.
 		if( xBytesSent != strlen((char*)new_buff))
 		{
-			HAL_UART_Transmit(&huart2, (uint8_t *)"Error Length Message Buffer\r\n",29,100);
-			// The string could not be added to the message buffer because there was
-			// not enough free space in the buffer.
+			HAL_UART_Transmit(&huart2, (const uint8_t *)"Message sent !=buffer data\r\n",26,100);
 		}
-		else {HAL_UART_Transmit(&huart2, (uint8_t *)"Message sent\r\n",14,100);}
-		//processing=1;
+		memset(rxBuffer,0,sizeof(rxBuffer));
 		rxIndex = 0;}
 	}
 
+	else { if (rxIndex > 0){
 
+		if (rxByte == '\b') {
+			rxBuffer[rxIndex]=' ';
+			rxIndex=rxIndex-1;
+			rxBuffer[rxIndex]=' ';
+			retour=rxIndex-1;
+			HAL_UART_Transmit(huart, (uint8_t *)" \b", 2, 100);
+
+			//	for (uint8_t i=0;i< strlen((char*)rxBuffer);i++)
+			//{rxBuffer[i]=rxBuffer[retour++];
+			//if (i==retour)
+			//rxBuffer[i]='\0';}
+		}
+	}
+	if (rxIndex < RX_BUFFER_SIZE-1) {
+
+		rxBuffer[rxIndex++] = rxByte;
+	}
 	else {
-		if (rxIndex < RX_BUFFER_SIZE-1) {
-			rxBuffer[rxIndex++] = rxByte;
-		}
-		else {
-			rxIndex=0;
-		}
+		rxIndex=0;
+	}
 	}
 	}
 	HAL_UART_Receive_IT(&huart2, &rxByte, 1);
-
 }
-void processMessage(uint8_t *rxBuffer) {
-	if (strcmp((char*)rxBuffer, "SET") == 0) {
-		HAL_UART_Transmit(&huart2, (uint8_t*)"Success\r\n", 9, 100);
-
-	} else if (strcmp((char*)rxBuffer, "exit") == 0) {
-		HAL_UART_Transmit(&huart2, (uint8_t*)"Exiting...\r\n", 13, 100);
-
-	} else {
-		HAL_UART_Transmit(&huart2, (uint8_t*)"Unvalid command\r\n", 19, 100);
+typedef struct CMD {
+	char* Name;
+	char* helper;
+	cmdHandler handler;
+	uint8_t MenuIndex;
+}CMD;
+void tokenization(char *str) //function to tokenize input string
+{
+	tokens[0]=strtok(str," ");
+	for (uint8_t i=1; i<10;i++)
+	{   tokens[i]=strtok(NULL," ");
+	if (tokens[i]==NULL)
+		break;
 	}
+}
+//tableau de liste des commandes
+CMD cmd_list[]={{"SETSF",(char*)0,SetSF_f,0}, //comparer value ou threshold dans la fonction pas besoin ici
+		{"GETSF",(char*)0,GetSF_f,0}, //Idée: faire plusieurs tableaux selon le menu (exple lora_cmd_list)
+		/*{"SETCR",'0',SetCR_f,0},
+		{"GETCR",'0',GetCR_f,0},
+		{"SETBW",0,SetBW_f,0},
+		{"GETBW",0,GetBW_f,0},
+		{"SETALTGPS",0,SetAltGPS_f,0},
+		{"GETALTGPS",0,GetAltGPS_f,0},
+		{"SETGPS",0,SetTempSoil_f,0},
+		{"GETGPS",0,GetTempSoil_f,0},
+		{"SETGPS",0,SetTempAir_f,0},
+		{"GETGPS",0,GetTempsAir_f,0},
+		{"SETRELATIVE",0,SetRelativeHumidity_f,0},
+		{"GETRELATIVE",0,GetRelativeHumidity_f,0},
+		{"SETSH",0,SetSoilHumidity_f,0},
+		{"GETSH",0,GetSoilHumidity_f,0},
+		{"SETLATGPS",0,SetLatGPS_f,0},
+		{"GETLATGPS",0,GetLatGPS_f,0},
+		{"SETGPS",0,SetTimeGPS_f,0},
+		{"GETGPS",0,GetTimeGPS_f,0},
+		{"SETGPS",0,SetGPS_f,0},
+		{"GETGPS",0,GetGPS_f,0},*/
+};
+uint8_t cl_elements=sizeof(cmd_list)/sizeof(cmd_list[0]);
+void SetSF_f(char* arg){
+	uint8_t MAX_TH_SF=12;
+	uint8_t MIN_TH_SF=6;
+	uint8_t success = 0;
+
+	    if (tokens[1] != NULL && strlen(tokens[1]) < 3) {
+	        int sf_new_value = atoi(tokens[1]);
+
+	        if (sf_new_value >= MIN_TH_SF && sf_new_value <= MAX_TH_SF) {
+	            SF_Value = sf_new_value;
+	            sprintf((char*)sf_buff, "SF VALUE SET TO %d SUCCESSFULLY\r\n", SF_Value);
+	            HAL_UART_Transmit(&huart2, sf_buff, strlen((char*)sf_buff), 100);
+	            success = 1;
+	        }
+	    }
+
+	    if (success==0) {
+	        HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+	    }
+
+	    memset(sf_buff, 0, sizeof(sf_buff));  // always clear at the end
+	}
+void GetSF_f(char* arg)
+{
+	sprintf((char*)sf_buff,"SF VALUE IS %d \r\n",SF_Value);
+	HAL_UART_Transmit(&huart2,sf_buff,strlen((char*)sf_buff), 100);
+}
+
+//After tokenizing , check the type , check type + subname , activate the function
+//inside the function check the value
+void ParseCommand() {
+	uint8_t c=0;
+	uint8_t correspond=0;
+	while (c<cl_elements)
+	{if (strcmp(tokens[0], cmd_list[c].Name)== 0)
+	{ cmd_list[c].handler(tokens[1]);
+	correspond=1;
+	}
+	c++;
+	}
+	if (correspond==0)
+	{HAL_UART_Transmit(&huart2, (uint8_t*)"COMMAND ERROR\r\n",16,100);}
 	processing=0;
 }
-
-/*void processMessage(uint8_t *rxBuffer) {
-    // Get the actual length of the received string
-    size_t len = rxIndex;  // Use rxIndex to track valid data length
-
-    // Check and strip `\r\n` (Carriage Return and Line Feed) from the end of the received data
-    if (len > 1 && rxBuffer[len - 1] == '\n' && rxBuffer[len - 2] == '\r') {
-        // Remove \r\n (both)
-        rxBuffer[len - 2] = '\0';  // Remove `\r` and null-terminate at the correct position
-    } else if (rxBuffer[len - 1] == '\n' || rxBuffer[len - 1] == '\r') {
-        // If there's only `\n` or `\r` at the end, remove it
-        rxBuffer[len - 1] = '\0';
-    }
-
-    // Convert the received message to lowercase for case-insensitive comparison
-    for (size_t i = 0; i < len; i++) {
-        rxBuffer[i] = (uint8_t)tolower(rxBuffer[i]);
-    }
-
-    // Now compare with "set" (all lowercase)
-    if (strcmp((char*)rxBuffer, "set") == 0) {
-        HAL_UART_Transmit(&huart2, (uint8_t*)"Success\r\n", 9, 100);
-    } else if (strcmp((char*)rxBuffer, "exit") == 0) {
-        HAL_UART_Transmit(&huart2, (uint8_t*)"Exiting...\r\n", 13, 100);
-    } else {
-        // For debugging, return the raw received command
-        HAL_UART_Transmit(&huart2, (uint8_t*)"Command: ", 9, 100);
-        HAL_UART_Transmit(&huart2, rxBuffer, len, 100);
-        HAL_UART_Transmit(&huart2, (uint8_t*)"\r\n", 2, 100);
-        HAL_UART_Transmit(&huart2, (uint8_t*)"Command not recognized\r\n", 24, 100);
-    }
+/*void AfficherMenuCapteurs(void){
+	sprintf((char*)txBuffer, "TO ACCESS TEMPERATURE FEATURES WRITE : TEMPERATURE\r\n");
+	HAL_UART_Transmit(&huart2,txBuffer, strlen((char*)txBuffer), 100);
+	sprintf((char*)txBuffer, "TO ACCESS HUMIDITY FEATURES WRITE : HUMIDITY\r\n");
+	HAL_UART_Transmit(&huart2,txBuffer, strlen((char*)txBuffer), 100);
+	sprintf((char*)txBuffer, "TO ACCESS AIR FEATURES WRITE : AIR\r\n");
+	HAL_UART_Transmit(&huart2,txBuffer, strlen((char*)txBuffer), 100);
+	sprintf((char*)txBuffer, "TO GO BACK TO THE PREVIOUS MENU WRITE : ..\r\n");
+	HAL_UART_Transmit(&huart2,txBuffer, strlen((char*)txBuffer), 100);
 }
- */
-
+void*/
 

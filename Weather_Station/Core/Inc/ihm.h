@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "main.h"
 #include "usart.h"
 #include "stm32l4xx_hal_uart.h"
@@ -23,7 +24,13 @@ extern uint8_t rx_flag;
 extern uint8_t rxBuffer[64];
 extern uint8_t rxByte;
 void AfficherMenuPrincipal(void);
-void processMessage(uint8_t *rxBuffer);
+void ParseCommand();
+void SetSF_f();
+void GetSF_f();
+void SetGPS_f();
+void GetGPS_f();
+void SAVESF_f();
+void tokenization(char *str);
 
 
 #endif /* INC_IHM_H_ */
