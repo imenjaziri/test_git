@@ -4,3 +4,7 @@ received_data
 rxIndex
 SF_Value
 tokens[1]
+cmd_buff
+cr_new_value
+Cr_Value
+Bandwidth_Value
