@@ -1,9 +1,33 @@
 #include "ihm.h"
 #define RX_BUFFER_SIZE 64
-#define CR_VALUE_SIZE 7
-#define BW_VALUE_SIZE 10
-#define MIN_SOIL_TEMP -20
-#define MAX_SOIL_TEMP 80
+#define MAX_SF 12
+#define MIN_SF 6
+#define MIN_TEMP -20.0f
+#define MAX_TEMP 80.0f
+#define MIN_HUMIDITY 0.0f
+#define MAX_HUMIDITY 1.0f
+#define MIN_WINDSPEED 0.0f
+#define MAX_WINDSPEED 280.0f
+#define MIN_RADIATION 0.5f
+#define MAX_RADIATION 40.0f
+#define MIN_KC 0
+#define MAX_KC 2
+#define MIN_KP 0
+#define MAX_KP 1
+#define MIN_ET0        0.0f
+#define MAX_ET0       30.0f
+#define MIN_ETC        0.0f
+#define MAX_ETC       30.0f
+#define MIN_AIR_PRESSURE  10.0f
+#define MAX_AIR_PRESSURE 160.0f
+#define MIN_HEIGHT        0.0f
+#define MAX_HEIGHT     1000.0f
+#define MIN_GPS_TIME 00000000
+#define MAX_GPS_TIME 23595959
+#define MIN_GPS_ALT   -430.0f
+#define MAX_GPS_ALT   12000.0f
+#define MIN_GPS_LAT -90.0f
+#define MAX_GPS_LAT  90.0f
 uint8_t rxBuffer[RX_BUFFER_SIZE];
 uint8_t new_buff[RX_BUFFER_SIZE];
 uint8_t rxByte;
@@ -20,17 +44,45 @@ uint8_t processing =0;
 volatile uint8_t retour=0;
 typedef void (*cmdHandler)(char *arg); // parameters: token[2], token[3] (TYPE OF VALUE+VAL), number of arguments (tokens)
 char *tokens[10];
-uint8_t SF_Value;
-uint8_t sf_new_value;
-uint8_t SF_Lora_Value;
-uint8_t cmd_buff[100];
-uint8_t Cr_new_value;
-uint8_t bw_new_value;
+uint8_t Sf_New_Value;
+uint8_t cmd_buff[180];
+uint8_t Cr_New_Value;
+uint8_t Bw_New_Value;
+uint32_t TimeGps_New_Value;
+float AltGps_New_Value;
+float LatGps_New_Value;
 float SoilTemp_New_Value;
 float AirTemp_New_Value;
+float RelativeHumidity_New_Value;
+float SoilHumidity_New_Value;
+float Radiation_New_Value;
+float WindSpeed_New_Value;
+float Kc_New_Value;
+float Kp_New_Value;
+float Et0_New_Value;
+float Etc_New_Value;
+float EtcAdj_New_Value;
+float AirPressure_New_Value;
+float Height_New_Value ;
 uint8_t Old_Default_Sf=7;
 uint8_t Old_Default_Bw=5;
 uint8_t Old_Default_Cr=6;
+float Old_Default_SoilTemp;
+float Old_Default_AirTemp;
+float Old_Default_RH;
+float Old_Default_SH;
+float Old_Default_Radiation;
+float Old_Default_WS;
+float Old_Default_KC;
+float Old_Default_KP;
+float Old_Default_ET0;
+float Old_Default_ETC;
+float Old_Default_ETCadj;
+float Old_Default_AirPressure;
+float Old_Default_Heigh;
+float Old_Default_TimeGPS;
+float Old_Default_AltGPS;
+float Old_Default_LatGPS;
 typedef struct {
 	char* Name;
 	char* helper;
@@ -51,6 +103,29 @@ typedef struct {
 	uint8_t bw_l ;
 }Lora;
 Lora LoraValues = {7, 5, 6};
+typedef struct {
+	float alt_gps;
+	float lat_gps ;
+	uint32_t time_gps ;
+}GPS;
+GPS Gps={545.4,3723.2475,12365500};
+typedef struct {
+	float AirTemp_s;
+	float SoilTemp_s ;
+	float RelativeHumidity_s ;
+	float SoilHumidity_s;
+	float AirPressure_s;
+	float WindSpeed_s;
+	float Kc;
+	float Kp;
+	float ET0;
+	float Radiation_s;
+	float ETc;
+	float ETcAdj;
+
+
+}SENSORS;
+SENSORS SensorsValues={27.5f,26.0f,0.5f,0.6f,10.0f,50.5f,1.4f,0.7f,5.8f,7.2f};
 //Useful functions for the code
 void UpperCase(char *str){
 	while (*str)
@@ -147,39 +222,39 @@ CMD cmd_list[]={
 		{"GETSF",(char*)":TO GET SF VALUE WRITE GETSF",GetSF_f,Lora_Menu},
 		{"SETCR",(char*)":TO SET CR VALUE WRITE SETCR VALUE\r\n[Value for each CR :{4/5 -> 1 ; 4/6 -> 2 ; 4/7 -> 3 ; 4/8 -> 4}] ",SetCR_f,Lora_Menu},
 		{"GETCR",(char*)":TO GET CR WRITE GETCR",GetCR_f,Lora_Menu},
-		{"SETBW",(char*)":TO SET BANDWIDTH VALUE WRITE BW 4 \r\n[Values for BW :{125Khz->4 ; 250Khz->5 ; 500Khz->6}] ",SetBW_f,Lora_Menu},
+		{"SETBW",(char*)":TO SET BANDWIDTH VALUE WRITE SETBW 4 \r\n[Values for BW :{125Khz->4 ; 250Khz->5 ; 500Khz->6}] ",SetBW_f,Lora_Menu},
 		{"GETBW",(char*)":TO GET BANDWIDTH VALUE WRITE GETBW\r\nNote : you must respect the Values provided ",GetBW_f,Lora_Menu},
 		//Sensors Menu Command List
-		{"SETST",(char*)"TO SET SOIL TEMPERATURE VALUE WRITE SETST 30\r\n[Possible Values :-20 ->80]",SetSoilTemp_f,Sensors_Menu},
 		{"GETST",(char*)":TO GET SOIL TEMPERATURE VALUE WRITE GETST",GetSoilTemp_f,Sensors_Menu},
-		{"SETAT",(char*)":TO SET AIR TEMPERATURE VALUE WRITE : SETAT 27.5",SetAirTemp_f,Sensors_Menu},
 		{"GETAT",(char*)":TO GET AIR TEMPERATURE VALUE WRITE GETAT",GetAirTemp_f,Sensors_Menu},
-		{"SETAP",(char*)":TO SET AIR PRESSURE VALUE WRITE SETAP",SetAirPressure_f,Sensors_Menu},
 		{"GETAP",(char*)":TO GET AIR PRESSURE VALUE WRITE GETAP",GetAirPressure_f,Sensors_Menu},
-		{"SETRH",(char*)":TO SET RELATIVE HUMIDITY VALUE WRITE SETRH",SetRelativeHumidity_f,Sensors_Menu},
 		{"GETRH",(char*)":TO GET RELATIVE HUMIDITY VALUE WRITE GETRH",GetRelativeHumidity_f,Sensors_Menu},
-		{"SETSH",(char*)":TO SET SOIL HUMIDITY VALUE WRITE SETSH",SetSoilHumidity_f,Sensors_Menu},
 		{"GETSH",(char*)":TO GET SOIL HUMIDITY VALUE WRITE GETSH",GetSoilHumidity_f,Sensors_Menu},
-		{"SETWS",(char*)":TO SET WIND SPEED VALUE WRITE SGETWS",SetWindSpeed_f,Sensors_Menu},
 		{"GETWS",(char*)":TO GET WIND SPEED VALUE WRITE GETWS",GetWindSpeed_f,Sensors_Menu},
-		{"SETRN",(char*)":TO SET NET RADIATION VALUE WRITE SETRN",SetRadiation_f,Sensors_Menu},
-		{"GETRN",(char*)":TO GET NET RADIATION VALUE WRITE GETRN",GetRadiation_f,Sensors_Menu},
-		{"SETKC",(char*)":TO SET Kc VALUE WRITE SETKC",SetKc_f,Sensors_Menu},
+		{"SETH",(char*)":TO SET THE HEIGH VALUE IN METERS WRITE SETH 2\r\n",SetHeigh_f,Sensors_Menu},
+		{"GETH",(char*)":TO GET THE HEIGH VALUE IN METERS WRITE GETH \r\n",GetHeigh_f,Sensors_Menu},
+		{"SETR",(char*)":TO SET RADIATION VALUE WRITE SETR 7.3\r\nPossible Values [0,40]",SetRadiation_f,Sensors_Menu},
+		{"GETR",(char*)":TO GET RADIATION VALUE WRITE GETR",GetRadiation_f,Sensors_Menu},
+		{"SETKC",(char*)":TO SET Kc VALUE WRITE SETKC 1.12",SetKc_f,Sensors_Menu},
 		{"GETKC",(char*)":TO GET Kc VALUE WRITE GETKC",GetKc_f,Sensors_Menu},
-		{"SETKP",(char*)":TO SET Kp VALUE WRITE SETKP",SetKp_f,Sensors_Menu},
+		{"SETKP",(char*)":TO SET Kp VALUE WRITE SETKP 0.7\r\nPossible Values [0,1]",SetKp_f,Sensors_Menu},
 		{"GETKP",(char*)":TO GET Kp VALUE WRITE GETKP",GetKp_f,Sensors_Menu},
-		{"SETET0",(char*)":TO SET ET0 VALUE WRITE GETET0",SetET0_f,Sensors_Menu},
-		{"GETET0",(char*)":TO GET ET0 VALUE WRITE GETET0\r\nOnly numbers with 1 digit after the decimal point are allowed / Example : 25.5",GetET0_f,Sensors_Menu},
+		{"SETET0",(char*)":TO SET ET0 VALUE WRITE SETET0 8.4",SetET0_f,Sensors_Menu},
+		{"SETET0",(char*)":TO GET ET0 VALUE WRITE GETET0",GetET0_f,Sensors_Menu},
+		{"SETETC",(char*)":TO SET ETC=Kc*ET0 VALUE WRITE SETETC 6.8",SetETC_f,Sensors_Menu},
+		{"GETETC",(char*)":TO GET ETC VALUE WRITE GETETC",GetETC_f,Sensors_Menu},
+		{"SETETCADJ",(char*)":TO SET ETc(adj)=Kc*Kp*ET0 VALUE WRITE SETETCADJ\r\nNote: ETc(adj) must be < than ETc",SetETCadj_f,Sensors_Menu},
+		{"GETETCADJ",(char*)":TO GET ET0 VALUE WRITE GETET0\r\nPossible values [0,30]",GetETCadj_f,Sensors_Menu},
 		//GPS Menu Command List
-		{"SETALT",(char*)"TO SET ALTITUDE VALUE WRITE SETALT",SetAltGPS_f,GPS_Menu},
+		{"SETALT",(char*)"TO SET ALTITUDE VALUE WRITE SETALT\r\nPossible Values : [-430.0,12000.0]",SetAltGPS_f,GPS_Menu},
 		{"GETALT",(char*)":TO GET ALTITUDE VALUE WRITE GETALT",GetAltGPS_f,GPS_Menu},
-		{"SETLAT",(char*)":TO SET LATITUDE VALUE WRITE SETLAT",SetLatGPS_f,GPS_Menu},
+		{"SETLAT",(char*)":TO SET LATITUDE VALUE WRITE SETLAT\r\nPossible Values : [-90.0,90.0]",SetLatGPS_f,GPS_Menu},
 		{"GETLAT",(char*)":TO GET LATITUDE VALUE WRITE GETLAT",GetLatGPS_f,GPS_Menu},
-		{"SETUTC",(char*)":TO SET TIME VALUE WRITE SETUTC",SetTimeGPS_f,GPS_Menu},
+		{"SETUTC",(char*)":TO SET TIME VALUE WRITE SETUTC 12361500\r\n 12361500 is equivalent to 12H36 minutes and 15 seconds",SetTimeGPS_f,GPS_Menu},
 		{"GETUTC",(char*)":TO GET TIME VALUE WRITE GETUTC",GetTimeGPS_f,GPS_Menu},
 		//SystemConfig Menu
-		{"SAVE",(char*)"TO SAVE MODIFIED PARAMETERS PERMANENTLY WRITE SAVE",Save_f,SysConfig_Menu},
-		{"RESTORE",(char*)"TO RESTORE OLD PARAMETERS WRITE RESTORE",Restore_f,SysConfig_Menu},
+		{"SAVE",(char*)":TO SAVE MODIFIED PARAMETERS PERMANENTLY WRITE SAVE",Save_f,SysConfig_Menu},
+		{"RESTORE",(char*)":TO RESTORE OLD PARAMETERS WRITE RESTORE",Restore_f,SysConfig_Menu},
 
 };
 void MainMenu(void) {
@@ -232,7 +307,7 @@ void ParseCommand() {
 	processing=0;
 }
 
-//Lora Menu Code
+/*//////////////////////////////////////////////LORA MENU\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 void LoraMenu(char* arg){
 
 	currentMenu=Lora_Menu;
@@ -247,14 +322,12 @@ void LoraMenu(char* arg){
 	}
 }
 void SetSF_f(char* arg){
-	uint8_t MAX_TH_SF=12;
-	uint8_t MIN_TH_SF=5;
 	uint8_t success = 0;
 
 	if (tokens[1] != NULL && strlen(tokens[1]) < 3) {
 		int sf_new_value = atoi(tokens[1]);
 
-		if (sf_new_value >= MIN_TH_SF && sf_new_value <= MAX_TH_SF) {
+		if (sf_new_value >= MIN_SF && sf_new_value <= MAX_SF) {
 			sprintf((char*)cmd_buff, "SF VALUE SET TO %d SUCCESSFULLY\r\n", sf_new_value);
 			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
 			success = 1;
@@ -291,7 +364,7 @@ case 12:
 }*/
 void GetSF_f(char* arg)
 {
-	sprintf((char*)cmd_buff,"SF VALUE IS %d \r\nSF DEFAULT VALUE IS %d",sf_new_value,LoraValues.sf_l);
+	sprintf((char*)cmd_buff,"SF VALUE IS %d \r\nNote: DEFAULT VALUE IS %d",Sf_New_Value,LoraValues.sf_l);
 	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
 	memset(cmd_buff,0,sizeof(cmd_buff));
 }
@@ -301,9 +374,9 @@ char* CR_Values[]={"1","2","3","4"};
 for (uint8_t cr=0 ; cr<sizeof(CR_Values) / sizeof(CR_Values[0]);cr++)
 {if (tokens[1]!=NULL &&
 		strcmp(tokens[1],CR_Values[cr])==0)
-{Cr_new_value=atoi(tokens[1]);
+{Cr_New_Value=atoi(tokens[1]);
 cr_flag=1;
-sprintf((char*)cmd_buff, "CR VALUE SET TO %d SUCCESSFULLY\r\n", Cr_new_value);
+sprintf((char*)cmd_buff, "CR VALUE SET TO %d SUCCESSFULLY\r\n", Cr_New_Value);
 HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
 memset(cmd_buff,0,sizeof(cmd_buff));
 break;
@@ -316,7 +389,7 @@ if (cr_flag==0)
 
 void GetCR_f(char* arg)
 {
-	sprintf((char*)cmd_buff,"CR VALUE IS %d \r\n",Cr_new_value);
+	sprintf((char*)cmd_buff,"CR VALUE IS %d \r\nNote:DEFAULTVALUE IS : %d\r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",Cr_New_Value,LoraValues.cr_l);
 	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
 	memset(cmd_buff,0,sizeof(cmd_buff));
 }
@@ -327,9 +400,9 @@ void SetBW_f(char* arg)
 	for (uint8_t bw=0 ; bw<sizeof(BW_Values) / sizeof(BW_Values[0]);bw++)
 	{if (tokens[1]!=NULL &&
 			strcmp(tokens[1],BW_Values[bw])==0)
-	{bw_new_value=atoi(tokens[1]);
+	{Bw_New_Value=atoi(tokens[1]);
 	bw_flag=1;
-	sprintf((char*)cmd_buff, "BW VALUE SET TO %d SUCCESSFULLY\r\n", bw_new_value);
+	sprintf((char*)cmd_buff, "BW VALUE SET TO %d SUCCESSFULLY\r\n", Bw_New_Value);
 	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
 	memset(cmd_buff,0,sizeof(cmd_buff));
 	break;
@@ -341,11 +414,14 @@ void SetBW_f(char* arg)
 }
 void GetBW_f(char* arg)
 {
-	sprintf((char*)cmd_buff,"BW VALUE IS : %d \r\nBW DEFAULT VALUE IS : %d\r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",bw_new_value,LoraValues.bw_l);
+	sprintf((char*)cmd_buff,"BW VALUE IS : %d \r\nNote:DEFAULT VALUE IS : %d\r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",Bw_New_Value,LoraValues.bw_l);
 	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
 	memset(cmd_buff,0,sizeof(cmd_buff));
 }
-//GPS Menu
+
+
+/*//////////////////////////////////////////////GPS MENU\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
+
 void GPSMenu(char* arg){
 	currentMenu=GPS_Menu;
 	sprintf((char*)txBuffer,"\033[1;34;107m-----------------GPS Menu---------------\033[0m\n \r\n");
@@ -358,24 +434,81 @@ void GPSMenu(char* arg){
 	}
 	}
 }
+
 void SetAltGPS_f(char* arg){
-	;
+	uint8_t gpsalt_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 12) {
+		AltGps_New_Value = atoi(tokens[1]);
+		if (TimeGps_New_Value >MIN_GPS_ALT && TimeGps_New_Value <MAX_GPS_ALT){
+			sprintf((char*)cmd_buff, "GPS ALTITUDE VALUE SET TO %.2f SUCCESSFULLY\r\n", AltGps_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			gpsalt_flag = 1;
+		}
+
+
+		if (gpsalt_flag==0) {
+			HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+		}
+
+		memset(cmd_buff, 0, sizeof(cmd_buff));
+
+	}
 }
 void GetAltGPS_f(char* arg){
-	;
+	sprintf((char*)cmd_buff,"GPS ALTITUDE VALUE IS : %.2f \r\nGPS ALTITUDE  DEFAULT VALUE IS : %.2f\r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",AltGps_New_Value,Gps.alt_gps);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
 }
 void SetLatGPS_f(char* arg){
-	;
+	uint8_t gpslat_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 12) {
+		LatGps_New_Value = atoi(tokens[1]);
+		if (LatGps_New_Value >MIN_GPS_LAT && TimeGps_New_Value <MAX_GPS_LAT){
+			sprintf((char*)cmd_buff, "GPS LATITUDE VALUE SET TO %.2f SUCCESSFULLY\r\n", LatGps_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			gpslat_flag = 1;
+		}
+
+
+		if (gpslat_flag==0) {
+			HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+		}
+
+		memset(cmd_buff, 0, sizeof(cmd_buff));
+
+	}
 }
 void GetLatGPS_f(char* arg){
-	;
+	sprintf((char*)cmd_buff,"GPS LATITUDE VALUE IS : %.2f \r\nGPS LATITUDE  DEFAULT VALUE IS : %.2f\r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",LatGps_New_Value,Gps.lat_gps);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
 }
 void SetTimeGPS_f(char* arg){
-	;
+	uint8_t gpstime_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 12) {
+		TimeGps_New_Value = atol(tokens[1]);
+		if (TimeGps_New_Value >MIN_GPS_TIME && TimeGps_New_Value <MAX_GPS_TIME){
+			sprintf((char*)cmd_buff, "GPS TIME VALUE SET TO %lu SUCCESSFULLY\r\n", TimeGps_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			gpstime_flag = 1;
+		}
+
+
+		if (gpstime_flag==0) {
+			HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+		}
+
+		memset(cmd_buff, 0, sizeof(cmd_buff));
+
+	}
 }
 void GetTimeGPS_f(char* arg){
-	;
+	sprintf((char*)cmd_buff,"GPS TIME VALUE IS : %lu \r\nGPS TIME  DEFAULT VALUE IS : %lu\r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",TimeGps_New_Value,Gps.time_gps);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
 }
+
+/*////////////////////////////////////////////// SENSORS MENU\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 void SensorsMenu(char* arg){
 	currentMenu=Sensors_Menu;
@@ -390,99 +523,216 @@ void SensorsMenu(char* arg){
 	}
 }
 
-void SetSoilTemp_f(char* arg){
-	uint8_t soiltemp = 0;
-	if (tokens[1] != NULL && strlen(tokens[1]) < 5) {
-		SoilTemp_New_Value = atof(tokens[1]);
-
-		if (SoilTemp_New_Value >= MIN_SOIL_TEMP && sf_new_value <= MAX_SOIL_TEMP) {
-			sprintf((char*)cmd_buff, "SOIL TEMPERATURE VALUE SET TO %.1f°C SUCCESSFULLY\r\n", SoilTemp_New_Value);
-			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
-			soiltemp = 1;
-		}
-	}
-
-	if (soiltemp==0) {
-		HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
-	}
-
-	memset(cmd_buff, 0, sizeof(cmd_buff));  // always clear at the end
-}
-
 void GetSoilTemp_f(char* arg){
-	;
+	sprintf((char*)cmd_buff,"SOIL TEMPERATURE VALUE IS : %.2f \r\n",SensorsValues.SoilTemp_s);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
 }
-void SetAirTemp_f(char* arg) {
-	uint8_t airtemp = 0;
-	if (tokens[1] != NULL && strlen(tokens[1]) < 5) {
-		AirTemp_New_Value = atof(tokens[1]);
 
-		if (AirTemp_New_Value >= MIN_SOIL_TEMP && sf_new_value <= MAX_SOIL_TEMP) {
-			sprintf((char*)cmd_buff, "AIR TEMPERATURE VALUE SET TO %.1f°C SUCCESSFULLY\r\n", AirTemp_New_Value);
+void GetAirTemp_f(char* arg){
+	sprintf((char*)cmd_buff,"AIR TEMPERATURE VALUE IS : %.2f°C",SensorsValues.AirTemp_s);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
+}
+
+void GetRelativeHumidity_f(char* arg){
+	sprintf((char*)cmd_buff,"RELATIVE HUMIDITY VALUE IS : %.2f \r\n",SensorsValues.RelativeHumidity_s);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
+}
+
+void GetSoilHumidity_f(char* arg){
+	sprintf((char*)cmd_buff,"SOIL HUMIDITY VALUE IS : %.2f",SensorsValues.SoilHumidity_s);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
+}
+
+void GetWindSpeed_f(char* arg){
+	sprintf((char*)cmd_buff,"WIND SPEED VALUE IS : %.2f IN Km/h\r",SensorsValues.WindSpeed_s);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
+}
+void SetRadiation_f(char* arg){
+	uint8_t radiation_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 5) {
+		Radiation_New_Value = atof(tokens[1]);
+
+		if (Radiation_New_Value >= MIN_RADIATION && Radiation_New_Value <= MAX_RADIATION) {
+			sprintf((char*)cmd_buff, "RADIATION VALUE SET TO %.2f SUCCESSFULLY\r\n", Radiation_New_Value);
 			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
-			airtemp = 1;
+			radiation_flag = 1;
 		}
 	}
 
-	if (airtemp==0) {
+	if (radiation_flag==0) {
 		HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
 	}
 
 	memset(cmd_buff, 0, sizeof(cmd_buff));
 }
-void GetAirTemp_f(char* arg){
-	;
-}
-void SetRelativeHumidity_f(char* arg){
-	;
-}
-void GetRelativeHumidity_f(char* arg){
-	;
-}
-void SetSoilHumidity_f(char* arg){
-	;
-}
-void GetSoilHumidity_f(char* arg){
-	;
-}
-void SetWindSpeed_f(char* arg){
-	;
-}
-void GetWindSpeed_f(char* arg){
-	;
-}
-void SetRadiation_f(char* arg){
-	;
-}
 void GetRadiation_f(char* arg){
-	;
+	sprintf((char*)cmd_buff,"RADIATION VALUE IS : %.2f\r\nNote:DEFAULT VALUE IS : %.2f \r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",Radiation_New_Value,SensorsValues.Radiation_s);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
 }
 void SetKc_f(char* arg){
-	;
+	uint8_t kc_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 5) {
+		Kc_New_Value = atof(tokens[1]);
+
+		if (RelativeHumidity_New_Value >= MIN_KC && Sf_New_Value <= MAX_KP) {
+			sprintf((char*)cmd_buff, "Kc VALUE SET TO %.2f SUCCESSFULLY\r\n", Kc_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			kc_flag = 1;
+		}
+	}
+
+	if (kc_flag==0) {
+		HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+	}
+
+	memset(cmd_buff, 0, sizeof(cmd_buff));
 }
 void GetKc_f(char* arg){
-	;
+	sprintf((char*)cmd_buff,"KC VALUE IS : %.2f\r\nNote:DEFAULT VALUE IS : %.2f \r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",Kc_New_Value,SensorsValues.Kc);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
 }
 void SetKp_f(char* arg){
-	;
+	uint8_t kp_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 5) {
+		Kp_New_Value = atof(tokens[1]);
+
+		if (Kp_New_Value >= MIN_KP && Sf_New_Value <= MAX_KP) {
+			sprintf((char*)cmd_buff, "Kp VALUE SET TO %.2f SUCCESSFULLY\r\n", Kp_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			kp_flag = 1;
+		}
+	}
+
+	if (kp_flag==0) {
+		HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+	}
+
+	memset(cmd_buff, 0, sizeof(cmd_buff));
 }
 void GetKp_f(char* arg){
-	;
-}
-void GetET0_f(char* arg){
-	;
+	sprintf((char*)cmd_buff,"KP VALUE IS : %.2f\r\nNote:DEFAULT VALUE IS : %.2f \r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",Kp_New_Value,SensorsValues.Kp);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
 }
 void SetET0_f(char* arg){
-	;
+	uint8_t et0_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 5) {
+		Et0_New_Value = atof(tokens[1]);
+
+		if (Et0_New_Value >= MIN_ET0 && Et0_New_Value <= MAX_ET0) {
+			sprintf((char*)cmd_buff, "ET0 VALUE SET TO %.2f SUCCESSFULLY\r\n", Et0_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			et0_flag = 1;
+		}
+	}
+
+	if (et0_flag==0) {
+		HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+	}
+
+	memset(cmd_buff, 0, sizeof(cmd_buff));
 }
+void GetET0_f(char* arg){
+	sprintf((char*)cmd_buff,"ET0 VALUE IS : %.2f\r\nNote:DEFAULT VALUE IS : %.2f \r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",Et0_New_Value,SensorsValues.ET0);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
+}
+
+void SetETC_f(char* arg){
+	uint8_t etc_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 5) {
+		Etc_New_Value = atof(tokens[1]);
+		if (Etc_New_Value >= MIN_ETC && Etc_New_Value <= MAX_ETC) {
+			sprintf((char*)cmd_buff, "ETC VALUE SET TO %.2f SUCCESSFULLY\r\n", Etc_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			etc_flag = 1;
+		}
+	}
+	if (etc_flag==0) {
+		HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+	}
+	memset(cmd_buff, 0, sizeof(cmd_buff));
+}
+
+void GetETC_f(char* arg){
+	sprintf((char*)cmd_buff,"ETC VALUE IS : %.2f\r\nNote:DEFAULT VALUE IS : %.2f \r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",Etc_New_Value,SensorsValues.ETc);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
+}
+
+void SetETCadj_f(char* arg){
+	uint8_t etcadj_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 5) {
+		EtcAdj_New_Value = atof(tokens[1]);
+		if (EtcAdj_New_Value >= 0 && EtcAdj_New_Value <= Old_Default_ETC) {
+			sprintf((char*)cmd_buff, "ETC ADJ VALUE SET TO %.2f SUCCESSFULLY\r\n", EtcAdj_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			etcadj_flag = 1;
+		}
+	}
+	if (etcadj_flag==0) {
+		HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+	}
+	memset(cmd_buff, 0, sizeof(cmd_buff));
+}
+
+void GetETCadj_f(char* arg){
+	sprintf((char*)cmd_buff,"ETC ADJ VALUE IS : %.2f\r\nNote:DEFAULT VALUE IS : %.2f \r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",EtcAdj_New_Value,SensorsValues.ETcAdj);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
+}
+
 void SetAirPressure_f(char* arg){
-	;
-
+	uint8_t airp_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 6) {
+		AirPressure_New_Value = atof(tokens[1]);
+		if (AirPressure_New_Value >= 80.0f && AirPressure_New_Value <= 110.0f) { // typical pressure range
+			sprintf((char*)cmd_buff, "AIR PRESSURE VALUE SET TO %.2f SUCCESSFULLY\r\n", AirPressure_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			airp_flag = 1;
+		}
+	}
+	if (airp_flag==0) {
+		HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+	}
+	memset(cmd_buff, 0, sizeof(cmd_buff));
 }
+
 void GetAirPressure_f(char* arg){
-	;
-
+	sprintf((char*)cmd_buff,"AIR PRESSURE VALUE IS : %.2f\r\nNote:DEFAULT VALUE IS : %.2f \r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",AirPressure_New_Value,SensorsValues.AirPressure_s);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
 }
+
+void SetHeigh_f(char* arg){
+	uint8_t height_flag = 0;
+	if (tokens[1] != NULL && strlen(tokens[1]) < 5) {
+		Height_New_Value = atof(tokens[1]);
+		if (Height_New_Value >= 0.0f && Height_New_Value <= 5000.0f) {
+			sprintf((char*)cmd_buff, "HEIGHT VALUE SET TO %.2f SUCCESSFULLY\r\n", Height_New_Value);
+			HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+			height_flag = 1;
+		}
+	}
+	if (height_flag==0) {
+		HAL_UART_Transmit(&huart2, (const uint8_t*)"INVALID VALUE\r\n", 16, 100);
+	}
+	memset(cmd_buff, 0, sizeof(cmd_buff));
+}
+
+void GetHeigh_f(char* arg){
+	sprintf((char*)cmd_buff,"HEIGHT VALUE IS : %.2f\r\nNote:DEFAULT VALUE IS : %.2f \r\n TO CHANGE DEFAULT VALUE GO TO SYSCONF",Height_New_Value,SensorsValues.AirPressure_s);
+	HAL_UART_Transmit(&huart2,cmd_buff,strlen((char*)cmd_buff), 100);
+	memset(cmd_buff,0,sizeof(cmd_buff));
+}
+
 void SysConfigMenu(char* arg){
 	currentMenu=SysConfig_Menu;
 	sprintf((char*)txBuffer,"------------------ SYSTEM CONFIGURATION MENU -----------------\r\n");
@@ -499,18 +749,65 @@ void SysConfigMenu(char* arg){
 void Save_f(char* arg){
 	//Saving Lora Values
 	Old_Default_Sf=LoraValues.sf_l;
-	LoraValues.sf_l=sf_new_value;
+	LoraValues.sf_l=Sf_New_Value;
 	sprintf((char*)txBuffer,"The default SF Value is now %d\r\n",LoraValues.sf_l);
 	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
 	Old_Default_Bw=LoraValues.bw_l;
-	LoraValues.bw_l=bw_new_value;
+	LoraValues.bw_l=Bw_New_Value;
 	sprintf((char*)txBuffer,"The default Bandwidth Value is now %d\r\n",LoraValues.bw_l);
 	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
 	Old_Default_Cr=LoraValues.cr_l;
-	LoraValues.cr_l=Cr_new_value;
+	LoraValues.cr_l=Cr_New_Value;
 	sprintf((char*)txBuffer,"The default CR buffer is now %d\r\n",LoraValues.cr_l);
+
 	//Saving GPS Values
+	 Old_Default_AltGPS=Gps.alt_gps ;
+	sprintf((char*)cmd_buff, "The default GPS ALTITUDE is now %.2f\r\n",Gps.alt_gps);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	Old_Default_LatGPS=Gps.lat_gps ;
+	sprintf((char*)cmd_buff, "The default GPS LATITUDE is now %.2f\r\n",Gps.lat_gps);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	Old_Default_TimeGPS=Gps.time_gps ;
+	sprintf((char*)cmd_buff, "The default GPS TIME is now %lu\r\n",Gps.time_gps);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
 	//Saving Sensors Values
+
+	Old_Default_Radiation = SensorsValues.Radiation_s;
+	SensorsValues.Radiation_s = Radiation_New_Value;
+	sprintf((char*)txBuffer, "The default Radiation is now %.2f\r\n", SensorsValues.Radiation_s);
+	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
+
+	Old_Default_KC = SensorsValues.Kc;
+	SensorsValues.Kc = Kc_New_Value;
+	sprintf((char*)txBuffer, "The default Kc value is now %.2f\r\n", SensorsValues.Kc);
+	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
+
+	Old_Default_KP = SensorsValues.Kp;
+	SensorsValues.Kp = Kp_New_Value;
+	sprintf((char*)txBuffer, "The default Kp value is now %.2f\r\n", SensorsValues.Kp);
+	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
+
+	Old_Default_ET0 = SensorsValues.ET0;
+	SensorsValues.ET0 = Et0_New_Value;
+	sprintf((char*)txBuffer, "The default ET0 value is now %.2f\r\n", SensorsValues.ET0);
+	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
+
+	Old_Default_ETC = SensorsValues.ETc;
+	SensorsValues.ETc = Etc_New_Value;
+	sprintf((char*)txBuffer, "The default ETc value is now %.2f\r\n", SensorsValues.ETc);
+	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
+
+	Old_Default_ETCadj = SensorsValues.ETcAdj;
+	SensorsValues.ETcAdj = EtcAdj_New_Value;
+	sprintf((char*)txBuffer, "The default ETcAdj value is now %.2f\r\n", SensorsValues.ETcAdj);
+	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
+
+	Old_Default_Heigh = Height_New_Value;
+	sprintf((char*)txBuffer, "The default Height is now %.2f\r\n", Old_Default_Heigh);
+	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
 
 }
 void Restore_f(char* arg){
@@ -524,7 +821,50 @@ void Restore_f(char* arg){
 	LoraValues.cr_l=Old_Default_Cr;
 	sprintf((char*)txBuffer,"CR value restored to %d\r\n",LoraValues.cr_l);
 	HAL_UART_Transmit(&huart2, txBuffer, strlen((char*)txBuffer), 100);
+
 	//Restoring GPS Values
+	Gps.alt_gps = Old_Default_AltGPS;
+	sprintf((char*)cmd_buff, "GPS ALTITUDE restored to %.2f\r\n",Gps.alt_gps);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	Gps.lat_gps = Old_Default_LatGPS;
+	sprintf((char*)cmd_buff, "GPS LATITUDE restored to %.2f\r\n",Gps.lat_gps);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	Gps.time_gps = Old_Default_TimeGPS;
+	sprintf((char*)cmd_buff, "GPS TIME restored to %lu\r\n",Gps.time_gps);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
 	//Restoring Sensors Values
+
+	SensorsValues.Radiation_s = Old_Default_Radiation;
+	sprintf((char*)cmd_buff, "Radiation restored to %.2f\r\n", SensorsValues.Radiation_s);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	SensorsValues.Kc = Old_Default_KC;
+	sprintf((char*)cmd_buff, "Kc restored to %.2f\r\n", SensorsValues.Kc);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	SensorsValues.Kp = Old_Default_KP;
+	sprintf((char*)cmd_buff, "Kp restored to %.2f\r\n", SensorsValues.Kp);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	SensorsValues.ET0 = Old_Default_ET0;
+	sprintf((char*)cmd_buff, "ET0 restored to %.2f\r\n", SensorsValues.ET0);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	SensorsValues.ETc = Old_Default_ETC;
+	sprintf((char*)cmd_buff, "ETC restored to %.2f\r\n", SensorsValues.ETc);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	SensorsValues.ETcAdj = Old_Default_ETCadj;
+	sprintf((char*)cmd_buff, "ETC Adjusted restored to %.2f\r\n", SensorsValues.ETcAdj);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
+	Height_New_Value = Old_Default_Heigh;
+	sprintf((char*)cmd_buff, "Height restored to %.2f\r\n", Height_New_Value);
+	HAL_UART_Transmit(&huart2, cmd_buff, strlen((char*)cmd_buff), 100);
+
 }
+
+
 
