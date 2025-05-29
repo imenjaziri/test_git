@@ -19,11 +19,12 @@
 #include "FreeRTOS.h"
 #include "message_buffer.h"
 #include "cmsis_os.h"
-
+extern uint8_t SF_Lora_Value;
 void MainMenu(void);
 void LoraMenu(char* arg);
 void SensorsMenu(char* arg);
 void GPSMenu(char* arg);
+void SysConfigMenu(char* arg);
 void ParseCommand();
 void SetSF_f(char* arg);
 void GetSF_f(char* arg);
@@ -64,6 +65,8 @@ void GetET0_f(char* arg);
 void SetET0_f(char* arg);
 void SetAirPressure_f(char* arg);
 void GetAirPressure_f(char* arg);
+void Save_f(char* arg);
+void Restore_f(char* arg);
 void tokenization(char *str);
 
 
